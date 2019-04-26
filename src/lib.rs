@@ -27,7 +27,7 @@ pub fn command_wrapper(test_command: &str, command_directory: &str) -> Command {
 pub fn docker_kill(port: i32) {
     let mut command: String = "".to_owned();
     command.push_str(&format!(
-        "docker kill dind_port{}",
+        "docker kill dind_port{} && docker container prune -f",
         port.to_string()
     ));
     let mut c = command_wrapper(&command, "/tmp/");
