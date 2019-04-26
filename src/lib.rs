@@ -1,6 +1,6 @@
 use std::process::Command;
+use std::str;
 use std::time::{SystemTime, UNIX_EPOCH};
-
 //use hubcaps::repositories::{RepoOptions};
 
 //returns a command setup ready to run the tests
@@ -23,12 +23,15 @@ pub fn command_wrapper(test_command: &str, command_directory: &str) -> Command {
     command
 }
 
-//rsa key generation
-//ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N '' -t rsa
-pub fn docker_prune(path: &str) {
-    let command = "sudo docker system prune";
+
+pub fn docker_kill(port: i32) {
+    let mut command: String = "".to_owned();
+    command.push_str(&format!(
+        "docker kill dind_port{}",
+        port.to_string()
+    ));
     let mut c = command_wrapper(&command, "/tmp/");
-    let c_out = c.output().expect("prune failed");
+    let c_out = c.output().expect("docker run failed");
     println!(
         "STD_OUT\n{}\nSTDERR\n{}",
         String::from_utf8_lossy(&c_out.stdout),
@@ -36,16 +39,36 @@ pub fn docker_prune(path: &str) {
     );
 }
 
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::env;
-    use std::fs::File;
-    use std::io::prelude::*;
-    #[test]
-    fn test_create_repo() {
-
-    }
-
+pub fn docker_run_new_test_instance(password: &str, port: i32) -> String {
+    let mut command: String = "".to_owned();
+    command.push_str(&format!(
+        "docker run --privileged \
+        -e CODER_PASSWORD=\"{}\" \
+        -p {}:8443 \
+        --name dind_port{} \
+        -d dind_base",
+        password,
+        port.to_string(),
+        port.to_string()
+    ));
+    let mut c = command_wrapper(&command, "/tmp/");
+    let c_out = c.output().expect("docker run failed");
+    println!(
+        "STD_OUT\n{}\nSTDERR\n{}",
+        String::from_utf8_lossy(&c_out.stdout),
+        String::from_utf8_lossy(&c_out.stderr)
+    );
+    let mut command2: String = "".to_owned();
+    command2.push_str(&format!(
+        "docker exec -i -t dind_port{} /bin/ash -c ./start_dind.sh",
+        port.to_string()
+    ));
+    let mut c2 = command_wrapper(&command2, "/tmp/");
+    let c_out2 = c2.output().expect("docker run failed");
+    println!(
+        "STD_OUT\n{}\nSTDERR\n{}",
+        String::from_utf8_lossy(&c_out2.stdout),
+        String::from_utf8_lossy(&c_out2.stderr)
+    );
+    String::from_utf8_lossy(&c_out.stdout).to_string()
 }
