@@ -60,7 +60,7 @@ pub fn docker_run_new_test_instance(password: &str, port: i32) -> String {
     );
     let mut command2: String = "".to_owned();
     command2.push_str(&format!(
-        "docker exec -i -t dind_port{} /bin/ash -c ./start_dind.sh",
+        "docker exec -i -t dind_port{} /bin/ash -c ./start_dind.sh &",
         port.to_string()
     ));
     let mut c2 = command_wrapper(&command2, "/tmp/");
